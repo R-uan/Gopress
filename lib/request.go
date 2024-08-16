@@ -4,6 +4,7 @@ type Request struct {
 	Path    string
 	Method  string
 	Headers RequestHeaders
+	Body    string
 }
 
 type RequestHeaders struct {
