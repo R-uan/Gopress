@@ -1,6 +1,6 @@
 package gopress
 
-type HandlerCallback func(req Request)
+type HandlerCallback func(req Request, res Response)
 
 type HttpServer struct {
 	Port        int

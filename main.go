@@ -9,9 +9,8 @@ import (
 func main() {
 	var server = gopress.Gopress();
 	
-	server.Get("/", func(req gopress.Request) {
-		println(req.Path);
-		println(req.Method);
+	server.Get("/", func(req gopress.Request, res gopress.Response) {
+		res.Send("", 200);
 	})
 	
 	server.Listen(3000, func() {

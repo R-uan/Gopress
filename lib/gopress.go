@@ -6,12 +6,9 @@ import (
 	"strings"
 )
 
-var server HttpServer;
-var httpMethods HttpMethodHandlers;
-
 //	Summary:
-//		Creates the main server struct. 
-//	
+//		Creates the main server struct.
+//
 //	Returns:
 //		Pointer to the server struct, allowing access to the rest of the application.
 func Gopress() (*HttpServer) {
@@ -52,7 +49,9 @@ func HandleRequests(client net.Conn) {
 	client.Read(rawRequest);
 
 	var req *Request = ExtractRequestData(string(rawRequest));
-	RequestRouting(req);
+	var res *Response = BuildResponse(&client);
+
+	RequestRouting(req, res);
 }
 
 //	Summary:
@@ -103,29 +102,29 @@ func ExtractRequestData(rawRequest string) (*Request) {
 	return &Request;
 }
 
+func BuildResponse(client *net.Conn) (*Response) {
+	return &Response{
+		Client: client,
+		Protocol: "HTTP/1.1",
+		Headers: ResponseHeaders{
+			Server: "Gopress/0.1",
+			Connection: "keep-alive",
+			CacheControl: "no-cache",
+			AccessControlAllowOrigin: "*",
+			XPoweredBy: "Go(Golang)",
+		},
+	}
+}
+
 //	Summary:
 //		Routes the Request struct to the appropriate handler.
-func RequestRouting(request *Request) {
+func RequestRouting(request *Request, response *Response) {
 	var method = request.Method
 	if(method == "GET") {
 		var route = httpMethods.GetMethod[request.Path]
-		if route != nil { route(*request) }
+		if route != nil { route(*request, *response) }
 	} else if (method == "POST") {
 			var route = httpMethods.GetMethod[request.Path]
-			if route != nil { route(*request) }
+			if route != nil { route(*request, *response) }
 	} // TODO: Create a not found response method
-}
-
-//	Summary:
-//		Adds the callback function to the GET Method handlers.
-func (server *HttpServer) Get(path string, callback HandlerCallback) {
-	if(httpMethods.GetMethod == nil) { httpMethods.GetMethod = make(map[string]HandlerCallback) }
-	httpMethods.GetMethod[path] = callback;
-}
-
-//	Summary:
-//		Adds the callback function to the POST Method handlers.
-func (server *HttpServer) Post(path string, callback HandlerCallback) {
-	if (httpMethods.PostMethod == nil) { httpMethods.PostMethod = make(map[string]HandlerCallback) }
-	httpMethods.PostMethod[path] = callback;
 }
