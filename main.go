@@ -2,18 +2,18 @@ package main
 
 import (
 	"fmt"
-	gopress "gocha/lib"
+	gopress "gopress/lib"
 	"time"
 )
 
 func main() {
-	var server = gopress.Gopress();
+	var app = gopress.Gopress();
 	
-	server.Get("/", func(req gopress.Request, res gopress.Response) {
-		res.Send("", 200);
+	app.Get("/", func(req gopress.Request, res gopress.Response) {
+		res.Send("<h1>Hello World</h1>", 200);
 	})
 	
-	server.Listen(3000, func() {
+	app.Listen(3000, func() {
 		fmt.Println("Listening on port 3000.");
 	});
 	

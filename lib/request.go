@@ -1,5 +1,10 @@
 package gopress
 
+import (
+	"gopress/lib/internal"
+	"strings"
+)
+
 type Request struct {
 	Path    string
 	Method  string
@@ -29,4 +34,52 @@ type RequestHeaders struct {
 	XForwardedFor   string `json:"x_forwarded_for"`
 	XRealIP         string `json:"x_real_ip"`
 	Range           string `json:"range"`
+}
+
+//	Summary:
+//		Maps the http method, path, headers and body to a Request struct.
+//
+//	Returns:
+//		Returns the pointer to said struct.
+func ExtractRequestData(rawRequest string) (*Request) {
+	
+	var rawRequestArray = strings.Split(rawRequest, "\n");
+	var requestHead = strings.SplitN(rawRequestArray[0], " ", 3);
+	
+	var headers = make(map[string]string);
+	for line := range rawRequestArray {
+		var parts = strings.SplitN(rawRequestArray[line], ":", 2);
+		if len(parts) == 2 { headers[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1]) }
+	}
+	
+	var Request = Request{
+		Path: requestHead[1],
+		Method: requestHead[0],
+		Body: strings.SplitN(rawRequest, "\r\n", 2)[1],
+		Headers: RequestHeaders{
+			Host:            headers["Host"],
+			UserAgent:       headers["User-Agent"],
+			Accept:          headers["Accept"],
+			AcceptLanguage:  headers["Accept-Language"],
+			AcceptEncoding:  headers["Accept-Encoding"],
+			Connection:      headers["Connection"],
+			ContentType:     headers["Content-Type"],
+			ContentLength:   internal.ParseContentLength(headers["Content-Length"]),
+			Authorization:   headers["Authorization"],
+			Cookie:          headers["Cookie"],
+			Referer:         headers["Referer"],
+			CacheControl:    headers["Cache-Control"],
+			UpgradeInsecure: headers["Upgrade-Insecure-Requests"],
+			IfModifiedSince: headers["If-Modified-Since"],
+			IfNoneMatch:     headers["If-None-Match"],
+			Origin:          headers["Origin"],
+			Pragma:          headers["Pragma"],
+			XRequestedWith:  headers["X-Requested-With"],
+			XForwardedFor:   headers["X-Forwarded-For"],
+			XRealIP:         headers["X-Real-IP"],
+			Range:           headers["Range"],
+		},
+	};
+	
+	return &Request;
 }
