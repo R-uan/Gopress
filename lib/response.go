@@ -8,10 +8,8 @@ import (
 )
 
 type Response struct {
-	Client        *net.Conn
+	client        *net.Conn
 	Protocol      string
-	StatusCode    int
-	StatusMessage string
 	Headers       ResponseHeaders
 	Body          string
 }
@@ -36,24 +34,45 @@ type ResponseHeaders struct {
 }
 
 func (res *Response) Send(body string, statusCode int) {
-	res.StatusCode = statusCode;
-	res.StatusMessage = httpStatusCodes[statusCode]
-  res.Body = body;
+	res.Body = body;
+	var headers = res.buildHeaders(statusCode);
+	var response = fmt.Sprintf("%s%s", headers, body)
 
-	res.Headers.ContentType = contentTypes["html"]
-  res.Headers.ContentLength = len([]byte(res.Body));
-  res.Headers.Date = time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT");
-
-  var head = fmt.Sprintf("%s %d %s\n", res.Protocol, res.StatusCode, res.StatusMessage);
-  var headers = res.Headers.ToPlainText();
-  var response = fmt.Sprintf("%s%s\r\n%s", head, headers, res.Body);
-
-  var client = *res.Client
+	var client = *res.client
   client.Write([]byte(response));
 }
 
 func (res *Response) Json(body any) {
+	
+}
 
+//	Summary:
+//		Builds basic response struct.
+func buildResponse(client *net.Conn) (*Response) {
+	return &Response{
+		client: client,
+		Protocol: "HTTP/1.1",
+		Headers: ResponseHeaders{
+			Server: "Gopress/0.1",
+			Connection: "keep-alive",
+			CacheControl: "no-cache",
+			AccessControlAllowOrigin: "*",
+			XPoweredBy: "Go(Golang)",
+		},
+	}
+}
+
+func (res *Response) buildHeaders(statusCode int) (string) {
+	StatusMessage := httpStatusCodes[statusCode]
+	
+	res.Headers.ContentType = contentTypes["txt"]
+  res.Headers.ContentLength = len([]byte(res.Body));
+  res.Headers.Date = time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT");
+
+  var head = fmt.Sprintf("%s %d %s\n", res.Protocol, statusCode, StatusMessage);
+  var headers = res.Headers.toPlainText();
+
+	return fmt.Sprintf("%s%s\r\n", head, headers);
 }
 
 func (res *Response) AddCustomHeader(key string, value string) {
@@ -61,7 +80,7 @@ func (res *Response) AddCustomHeader(key string, value string) {
   res.Headers.CustomHeaders[key] = value;
 }
 
-func (headers *ResponseHeaders) ToPlainText() string {
+func (headers *ResponseHeaders) toPlainText() string {
 	value := reflect.ValueOf(headers)
 	if value.Kind() == reflect.Ptr { value = value.Elem() }
 	typ := value.Type()

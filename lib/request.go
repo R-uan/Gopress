@@ -2,6 +2,7 @@ package gopress
 
 import (
 	"gopress/lib/internal"
+	"net"
 	"strings"
 )
 
@@ -41,7 +42,7 @@ type RequestHeaders struct {
 //
 //	Returns:
 //		Returns the pointer to said struct.
-func ExtractRequestData(rawRequest string) (*Request) {
+func extractRequest(rawRequest string) (*Request) {
 	
 	var rawRequestArray = strings.Split(rawRequest, "\n");
 	var requestHead = strings.SplitN(rawRequestArray[0], " ", 3);
@@ -82,4 +83,18 @@ func ExtractRequestData(rawRequest string) (*Request) {
 	};
 	
 	return &Request;
+}
+
+//	Summary:
+//		Function that handles individual accepted requests on it s own goroutine.
+func handleRequests(client net.Conn) {
+	defer client.Close();
+	var rawRequest = make([]byte, 1024);
+	client.Read(rawRequest);
+
+	var req *Request = extractRequest(string(rawRequest));
+	var res *Response = buildResponse(&client);
+	
+	middlewarePipeLine(req, res)
+	routing(req, res);
 }

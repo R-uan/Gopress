@@ -2,10 +2,6 @@ package gopress
 
 // Global variables for the package.
 
-var server HttpServer
-
-var httpMethods HttpMethodHandlers
-
 var httpStatusCodes = map[int]string {
   200: "OK",
   201: "Created",
