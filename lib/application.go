@@ -5,8 +5,6 @@ import (
 	"net"
 )
 
-type HandlerCallback func(req Request, res Response)
-
 var server HttpServer
 type HttpServer struct {
 	Port        int

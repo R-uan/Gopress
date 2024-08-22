@@ -1,15 +1,17 @@
 package gopress
 
+type HandlerCallback func(req Request, res Response)
 type Routes struct {
-	GetMethod  map[string]HandlerCallback
-	PostMethod map[string]HandlerCallback
+	GetMethod    map[string]HandlerCallback
+	PostMethod   map[string]HandlerCallback
+	PatchMethod  map[string]HandlerCallback
+	DeleteMethod map[string]HandlerCallback
 }
 
 var routesMap Routes
 
-// Summary:
-//
-//	Routes the Request struct to the appropriate handler.
+//	Summary:
+//		Routes the Request struct to the appropriate handler.
 func routing(request *Request, response *Response) {
 	var method = request.Method
 	if method == "GET" {
@@ -25,9 +27,8 @@ func routing(request *Request, response *Response) {
 	} // TODO: Create a not found response method
 }
 
-// Summary:
-//
-//	Adds the callback function to the GET Method handlers.
+//	Summary:
+//		Adds the callback function to the GET Method handlers.
 func (server *HttpServer) Get(path string, callback HandlerCallback) {
 	if routesMap.GetMethod == nil {
 		routesMap.GetMethod = make(map[string]HandlerCallback)
@@ -35,12 +36,29 @@ func (server *HttpServer) Get(path string, callback HandlerCallback) {
 	routesMap.GetMethod[path] = callback
 }
 
-// Summary:
-//
-//	Adds the callback function to the POST Method handlers.
+//	Summary:
+//		Add the callback function to the POST Method handlers.
 func (server *HttpServer) Post(path string, callback HandlerCallback) {
 	if routesMap.PostMethod == nil {
 		routesMap.PostMethod = make(map[string]HandlerCallback)
 	}
 	routesMap.PostMethod[path] = callback
+}
+
+//	Summary:
+//		Add the callback function to the PATCH Method handlers.
+func (server *HttpServer) Patch(path string, callback HandlerCallback) {
+	if routesMap.PatchMethod == nil {
+		routesMap.PatchMethod = make(map[string]HandlerCallback)
+	}
+	routesMap.PatchMethod[path] = callback
+}
+
+//	Summary:
+//		Add the callback function to the DELETE Method handlers.
+func (server *HttpServer) Delete(path string, callback HandlerCallback) {
+	if routesMap.DeleteMethod == nil {
+		routesMap.DeleteMethod = make(map[string]HandlerCallback)
+	}
+	routesMap.DeleteMethod[path] = callback
 }

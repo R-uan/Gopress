@@ -1,6 +1,7 @@
 package gopress
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"reflect"
@@ -33,17 +34,29 @@ type ResponseHeaders struct {
 	CustomHeaders            map[string]string
 }
 
+//	Summary:
+//		Build response with head, headers and body then sends it to the client.
 func (res *Response) Send(body string, statusCode int) {
 	res.Body = body;
-	var headers = res.buildHeaders(statusCode);
+	var headers = res.buildHeaders(statusCode, "txt");
 	var response = fmt.Sprintf("%s%s", headers, body)
-
+	println(response);
 	var client = *res.client
   client.Write([]byte(response));
 }
 
-func (res *Response) Json(body any) {
+//	Summary:
+//		Attempt to parse the given body to a json object.
+func (res *Response) Json(body any, statusCode int) {
+	jsonBody, err := json.Marshal(body);
+	if err != nil { fmt.Println("Not able to parse the body to json.") }
 	
+	res.Body = string(jsonBody);
+	var headers = res.buildHeaders(statusCode, "json");
+	var response = fmt.Sprintf("%s%s", headers, body)
+	
+	var client = *res.client
+	client.Write([]byte(response));
 }
 
 //	Summary:
@@ -62,10 +75,12 @@ func buildResponse(client *net.Conn) (*Response) {
 	}
 }
 
-func (res *Response) buildHeaders(statusCode int) (string) {
+//	Summary:
+//		Fill the header with additional information and converts it to plain text.
+func (res *Response) buildHeaders(statusCode int, contentType string) (string) {
 	StatusMessage := httpStatusCodes[statusCode]
 	
-	res.Headers.ContentType = contentTypes["txt"]
+	res.Headers.ContentType = contentTypes[contentType]
   res.Headers.ContentLength = len([]byte(res.Body));
   res.Headers.Date = time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT");
 
@@ -75,18 +90,15 @@ func (res *Response) buildHeaders(statusCode int) (string) {
 	return fmt.Sprintf("%s%s\r\n", head, headers);
 }
 
-func (res *Response) AddCustomHeader(key string, value string) {
-  if res.Headers.CustomHeaders == nil { res.Headers.CustomHeaders = make(map[string]string)}
-  res.Headers.CustomHeaders[key] = value;
-}
-
+//	Summary:
+//		Convert the response headers to plain-text to be sent back to the client.
 func (headers *ResponseHeaders) toPlainText() string {
 	value := reflect.ValueOf(headers)
 	if value.Kind() == reflect.Ptr { value = value.Elem() }
 	typ := value.Type()
-
+	
 	var result string
-
+	
 	ignoreEmpty := func(val reflect.Value) bool {
 		switch val.Kind() {
 		case reflect.String:
@@ -101,13 +113,13 @@ func (headers *ResponseHeaders) toPlainText() string {
 			return false
 		}
 	}
-
+	
 	for i := 0; i < value.NumField(); i++ {
 		field := typ.Field(i)
 		fieldValue := value.Field(i)
-
+		
 		if ignoreEmpty(fieldValue) { continue }
-
+		
 		if fieldValue.Kind() == reflect.Map {
 			result += fmt.Sprintf("%s:\n", field.Name)
 			for _, key := range fieldValue.MapKeys() {
@@ -123,3 +135,8 @@ func (headers *ResponseHeaders) toPlainText() string {
 
 	return result
 }
+
+/* func (res *Response) AddCustomHeader(key string, value string) {
+	if res.Headers.CustomHeaders == nil { res.Headers.CustomHeaders = make(map[string]string)}
+	res.Headers.CustomHeaders[key] = value;
+} */

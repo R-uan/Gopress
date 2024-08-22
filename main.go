@@ -8,14 +8,17 @@ import (
 
 func main() {
 	var app = gopress.Gopress();
-	
-	app.Get("/", func(req gopress.Request, res gopress.Response) {
-		res.Headers.Location = "Hey";
-		res.Send("<h1>Hello World</h1>", 200);
-	})
 
 	app.Use(middleware);
 	app.Use(middleware2);
+	
+	app.Get("/", func(req gopress.Request, res gopress.Response) {
+		res.Send("Hello World", 200);
+	})
+
+	app.Post("/" , func(req gopress.Request, res gopress.Response) {
+		res.Json("{ \"message\": \"hi\" }", 200);
+	});
 
 	app.Listen(3000, func() {
 		fmt.Println("Listening on port 3000.");
