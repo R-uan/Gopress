@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+
 func main() {
 	var app = gopress.Gopress();
 
@@ -13,7 +14,7 @@ func main() {
 	app.Use(middleware2);
 	
 	app.Get("/", func(req gopress.Request, res gopress.Response) {
-		res.Send("Hello World", 200);
+		res.Json(`{"message":"Hi"}`, 200);
 	})
 
 	app.Post("/" , func(req gopress.Request, res gopress.Response) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -39,8 +40,7 @@ type ResponseHeaders struct {
 func (res *Response) Send(body string, statusCode int) {
 	res.Body = body;
 	var headers = res.buildHeaders(statusCode, "txt");
-	var response = fmt.Sprintf("%s%s", headers, body)
-	println(response);
+	var response = fmt.Sprintf("%s\r\n%s", headers, body)
 	var client = *res.client
   client.Write([]byte(response));
 }
@@ -50,11 +50,13 @@ func (res *Response) Send(body string, statusCode int) {
 func (res *Response) Json(body any, statusCode int) {
 	jsonBody, err := json.Marshal(body);
 	if err != nil { fmt.Println("Not able to parse the body to json.") }
-	
-	res.Body = string(jsonBody);
+	newJsonBody := strings.ReplaceAll(string(jsonBody), "\\", "")
+	newJsonBody = newJsonBody[1 : len(newJsonBody) - 1]
+
 	var headers = res.buildHeaders(statusCode, "json");
-	var response = fmt.Sprintf("%s%s", headers, body)
-	
+	var response = fmt.Sprintf("%s\r\n%s", headers, newJsonBody)
+	res.Headers.ContentLength = len(string(jsonBody));
+
 	var client = *res.client
 	client.Write([]byte(response));
 }
@@ -87,7 +89,7 @@ func (res *Response) buildHeaders(statusCode int, contentType string) (string) {
   var head = fmt.Sprintf("%s %d %s\n", res.Protocol, statusCode, StatusMessage);
   var headers = res.Headers.toPlainText();
 
-	return fmt.Sprintf("%s%s\r\n", head, headers);
+	return fmt.Sprintf("%s%s", head, headers);
 }
 
 //	Summary:
