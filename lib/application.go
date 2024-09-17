@@ -3,6 +3,7 @@ package gopress
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 var server HttpServer
@@ -43,4 +44,5 @@ func (server *HttpServer) Listen(port int, callback func()) {
 	}();
 
 	callback();
+	for { time.Sleep(1 * time.Second) }
 }

@@ -49,9 +49,10 @@ func (res *Response) Send(body string, statusCode int) {
 //		Attempt to parse the given body to a json object.
 func (res *Response) Json(body any, statusCode int) {
 	jsonBody, err := json.Marshal(body);
-	if err != nil { fmt.Println("Not able to parse the body to json.") }
+	if err != nil { fmt.Println("Not able to parse the response body to json.") }
+
 	newJsonBody := strings.ReplaceAll(string(jsonBody), "\\", "")
-	newJsonBody = newJsonBody[1 : len(newJsonBody) - 1]
+	/* newJsonBody = newJsonBody[1 : len(newJsonBody) - 1] */
 
 	var headers = res.buildHeaders(statusCode, "json");
 	var response = fmt.Sprintf("%s\r\n%s", headers, newJsonBody)
@@ -63,16 +64,16 @@ func (res *Response) Json(body any, statusCode int) {
 
 //	Summary:
 //		Builds basic response struct.
-func buildResponse(client *net.Conn) (*Response) {
+func buildResponse(client *net.Conn, request Request) (*Response) {
 	return &Response{
 		client: client,
-		Protocol: "HTTP/1.1",
+		Protocol: request.Protocol,
 		Headers: ResponseHeaders{
-			Server: "Gopress/0.1",
-			Connection: "keep-alive",
+			Server: "Gopress",
+			Connection: request.Headers.Connection,
 			CacheControl: "no-cache",
 			AccessControlAllowOrigin: "*",
-			XPoweredBy: "Go(Golang)",
+			XPoweredBy: "Go",
 		},
 	}
 }
@@ -84,9 +85,9 @@ func (res *Response) buildHeaders(statusCode int, contentType string) (string) {
 	
 	res.Headers.ContentType = contentTypes[contentType]
   res.Headers.ContentLength = len([]byte(res.Body));
-  res.Headers.Date = time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT");
+	res.Headers.Date = time.Now().Format("Mon, 02 Jan 2006 15:04:05 GMT");
 
-  var head = fmt.Sprintf("%s %d %s\n", res.Protocol, statusCode, StatusMessage);
+  var head = fmt.Sprintf("%s %d %s\n", strings.TrimSpace(res.Protocol), statusCode, StatusMessage);
   var headers = res.Headers.toPlainText();
 
 	return fmt.Sprintf("%s%s", head, headers);
@@ -137,8 +138,3 @@ func (headers *ResponseHeaders) toPlainText() string {
 
 	return result
 }
-
-/* func (res *Response) AddCustomHeader(key string, value string) {
-	if res.Headers.CustomHeaders == nil { res.Headers.CustomHeaders = make(map[string]string)}
-	res.Headers.CustomHeaders[key] = value;
-} */

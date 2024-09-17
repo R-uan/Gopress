@@ -1,6 +1,7 @@
 package gopress
 
 import (
+	"fmt"
 	"gopress/lib/internal"
 	"net"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 type Request struct {
 	Path    string
+	Protocol string
 	Method  string
 	Headers RequestHeaders
 	Body    string
@@ -38,6 +40,19 @@ type RequestHeaders struct {
 }
 
 //	Summary:
+//		Function that handles individual accepted requests on it s own goroutine.
+func handleRequests(client net.Conn) {
+	defer client.Close();
+	var rawRequestBuffer = make([]byte, 1024);
+	client.Read(rawRequestBuffer);
+
+	var request *Request = extractRequest(string(rawRequestBuffer));
+	var response *Response = buildResponse(&client, *request);
+	middlewarePipeLine(request, response)
+	routing(request, response);
+}
+
+//	Summary:
 //		Maps the http method, path, headers and body to a Request struct.
 //
 //	Returns:
@@ -56,6 +71,7 @@ func extractRequest(rawRequest string) (*Request) {
 	var Request = Request{
 		Path: requestHead[1],
 		Method: requestHead[0],
+		Protocol: requestHead[2],
 		Body: strings.SplitN(rawRequest, "\r\n", 2)[1],
 		Headers: RequestHeaders{
 			Host:            headers["Host"],
@@ -81,20 +97,6 @@ func extractRequest(rawRequest string) (*Request) {
 			Range:           headers["Range"],
 		},
 	};
-	
+	fmt.Println(Request)
 	return &Request;
-}
-
-//	Summary:
-//		Function that handles individual accepted requests on it s own goroutine.
-func handleRequests(client net.Conn) {
-	defer client.Close();
-	var rawRequest = make([]byte, 1024);
-	client.Read(rawRequest);
-
-	var req *Request = extractRequest(string(rawRequest));
-	var res *Response = buildResponse(&client);
-	
-	middlewarePipeLine(req, res)
-	routing(req, res);
 }
